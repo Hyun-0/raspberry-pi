@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Dashboard</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        .container {
+            width: 375px; /* iPhone X 가로 너비 */
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .led-block {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .color-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+        }
+        .led-off {
+            background-color: #ddd;
+            opacity: 0.5;
+        }
+        .data-section {
+            margin: 20px 0;
+        }
+        h2 {
+            margin: 10px 0;
+            color: #333;
+        }
+        .status, .led-block span {
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>스마트 홈 제어판</h2>
+
+        <div class="led-block" id="kitchen-led">
+            <span>주방:</span>
+            <span class="rgb-text"></span>
+            <div class="color-box"></div>
+        </div>
+
+        <div class="led-block" id="living-room-led">
+            <span>거실:</span>
+            <span class="rgb-text"></span>
+            <div class="color-box"></div>
+        </div>
+
+        <div class="led-block" id="bedroom-led">
+            <span>식당:</span>
+            <span class="rgb-text"></span>
+            <div class="color-box"></div>
+        </div>
+
+        <div class="data-section">
+            <p class="status" id="temperature-status"></p>
+            <p class="status" id="humidity-status"></p>
+        </div>
+    </div>
+
+    <script>
+        // 주기적으로 데이터 갱신 (예: 3초마다)
+        setInterval(fetchData, 3000);
+
+        function fetchData() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    updateLed('kitchen-led', data.kitchen_led);
+                    updateLed('living-room-led', data.living_room_led);
+                    updateLed('bedroom-led', data.bedroom_led);
+
+                    document.getElementById('temperature-status').innerText =
+                        `온도: ${data.dht.temperature}°C (목표: ${data.dht.object_temperature}°C)`;
+                    document.getElementById('humidity-status').innerText =
+                        `습도: ${data.dht.humidity}% (목표: ${data.dht.object_humidity}%)`;
+                });
+        }
+
+        function updateLed(elementId, ledData) {
+            const ledElement = document.getElementById(elementId);
+            const rgbText = ledElement.querySelector('.rgb-text');
+            const colorBox = ledElement.querySelector('.color-box');
+
+            rgbText.innerText = `R(${ledData.red}) G(${ledData.green}) B(${ledData.blue})`;
+            colorBox.style.backgroundColor = ledData.isLedOn ? `rgb(${ledData.red}, ${ledData.green}, ${ledData.blue})` : '#ddd';
+            colorBox.className = ledData.isLedOn ? 'color-box' : 'color-box led-off';
+        }
+        
+        // 페이지 로드 시 초기 데이터 로드
+        fetchData();
+    </script>
+</body>
+</html>
